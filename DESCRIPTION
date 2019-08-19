@@ -11,3 +11,9 @@ LazyData: true
 RoxygenNote: 6.1.1
 URL: https://github.com/yikeshu0611/nsfc
 BugReports: https://github.com/yikeshu0611/nsfc/issues
+Imports: 
+    tmcn,
+    rvest,
+    httr,
+    magrittr,
+    svDialogs
