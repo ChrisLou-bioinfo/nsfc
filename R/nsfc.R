@@ -9,12 +9,14 @@
 #' @param itemCategory category
 #' @param fundStart fund min
 #' @param fundEnd fund max
-#'
+#' @param abstract a logical argument, default is FLASE
+#' 
 #' @return dataframe with 7 items
 #' @export
 #'
 #' @examples nsfc(yearStart=2018)
-nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundStart,fundEnd,loop=FALSE){
+nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundStart,fundEnd,abstract){
+    if (!is.logical(abstract)) stop(tmcn::toUTF8('abstract\u5E94\u8BE5\u662F\u903B\u8F91\u53D8\u91CF'))
     library(httr)
     library(rvest)
     library(magrittr)
@@ -56,22 +58,22 @@ nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundS
     time_message=paste0(tmcn::toUTF8('\u5927\u7EA6\u9700\u8981'),
                         url_length*sleep.time/60,
                         tmcn::toUTF8('\u5206\u949F'))
-    if (loop==FALSE){
+    cat(crayon::red$bgWhite(tmcn::toUTF8('\u6574\u7406\u6807\u9898')),'\n')
     if (url_length*sleep.time/60 <= 2){
-            cat(time_message,'\n')
-        }else{
-            message(time_message)
-            message(tmcn::toUTF8('\u8BF7\u95EE\u4F60\u8FD8\u8981\u7EE7\u7EED\u5417?'))
-            ask = c(tmcn::toUTF8('\u7EE7\u7EED'),tmcn::toUTF8('\u4E0D\u7EE7\u7EED'))
-            res <- svDialogs::dlg_list(choices = ask,preselect=FALSE,
-                                       multiple=TRUE)$res
-            if (nchar(res)==3) {
-                opt <- options(show.error.messages = FALSE)
-                on.exit(options(opt))
-                stop()
-            }
+        message(time_message,'\n')
+    }else{
+        message(time_message)
+        message(tmcn::toUTF8('\u8BF7\u95EE\u4F60\u8FD8\u8981\u7EE7\u7EED\u5417?'))
+        ask = c(tmcn::toUTF8('\u7EE7\u7EED'),tmcn::toUTF8('\u4E0D\u7EE7\u7EED'))
+        res <- svDialogs::dlg_list(choices = ask,
+                                   preselect=FALSE,
+                                   multiple = FALSE)$res
+        if (nchar(res)==3) {
+            opt <- options(show.error.messages = FALSE)
+            on.exit(options(opt))
+            stop()
         }
-        }
+    }
     # scrab
     prgbar<- txtProgressBar(min = 0, max = url_length,
                             style = 3,initial = 0,width = 25)
@@ -109,7 +111,8 @@ nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundS
         id = r_content %>% 
             html_nodes(xpath = '//*[@id="resultLst"]/div[position()<=10]/div/p[1]/b') %>%
             html_text(trim = TRUE) %>%
-            gsub(pattern = "\u00A0",replacement = " ")
+            gsub(pattern = "\u00A0",replacement = " ") %>%
+            gsub(pattern = " ",replacement = "")
         #6. year
         year = r_content %>% 
             html_nodes(xpath = '//*[@id="resultLst"]//div/p[1]/span[3]/b') %>%
@@ -120,6 +123,11 @@ nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundS
             html_nodes(xpath = '//*[@id="resultLst"]//div/p[2]/span[1]/b') %>%
             html_text(trim = TRUE) %>%
             gsub(pattern = "\u00A0",replacement = " ")
+        #8. abstract url
+        abstract_url = r_content %>% 
+            html_nodes(xpath = '//*[@id="resultLst"]//p/a') %>%
+            html_attr("href") %>%
+            gsub(pattern = "\u00A0",replacement = " ")
         ###data.frame.i
         # if not missing subject, suject will be added to df
         if (!missing(subject)) {
@@ -127,10 +135,10 @@ nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundS
                 html_nodes(xpath = '//*[@id="tab1"]/form/div[2]/div[3]/span[2]/span[1]/span/span[1]') %>%
                 html_text(trim = TRUE)
             df.i = data.frame(subject.text,study_type,item,person,department,
-                              id,year,fund)
+                              id,year,fund,abstract_url)
         }else{
             df.i = data.frame(study_type,item,person,department,
-                              id,year,fund)
+                              id,year,fund,abstract_url)
         }
         df = rbind(df,df.i)
         #generate char
@@ -146,7 +154,8 @@ nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundS
                        tmcn::toUTF8('\u5355\u4F4D'),
                        tmcn::toUTF8('\u9879\u76EE\u7F16\u53F7'),
                        tmcn::toUTF8('\u6279\u51C6\u5E74\u5EA6'),
-                       tmcn::toUTF8('\u91D1\u989D'))
+                       tmcn::toUTF8('\u91D1\u989D'),
+                       tmcn::toUTF8('\u6458\u8981\u94FE\u63A5'))
     }else{
         colnames(df)=c(tmcn::toUTF8('\u7814\u7A76\u7C7B\u578B'),
                        tmcn::toUTF8('\u9879\u76EE\u540D\u79F0'),
@@ -154,7 +163,105 @@ nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundS
                        tmcn::toUTF8('\u5355\u4F4D'),
                        tmcn::toUTF8('\u9879\u76EE\u7F16\u53F7'),
                        tmcn::toUTF8('\u6279\u51C6\u5E74\u5EA6'),
-                       tmcn::toUTF8('\u91D1\u989D')) 
+                       tmcn::toUTF8('\u91D1\u989D'),
+                       tmcn::toUTF8('\u6458\u8981\u94FE\u63A5')) 
     }
+    if (!abstract) return(df)
+    if (abstract){
+        cat(crayon::red$bgWhite(tmcn::toUTF8('\u6574\u7406\u6458\u8981')),'\n')
+        #all abstract urls
+        abstract_url = as.character(df[,ncol(df)])
+        #wheter to continue depends on time consuming
+        time_consume = ifelse (length(abstract_url) <= 9, 15,30)
+        message(tmcn::toUTF8('\u5927\u7EA6\u9700\u8981'),length(abstract_url)*time_consume/60,tmcn::toUTF8('\u5206\u949F'))
+        message(tmcn::toUTF8('\u8BF7\u95EE\u4F60\u8FD8\u8981\u7EE7\u7EED\u5417?'))
+        ask = c(tmcn::toUTF8('\u7EE7\u7EED'),tmcn::toUTF8('\u4E0D\u7EE7\u7EED'))
+        res <- svDialogs::dlg_list(choices = ask,
+                                   preselect=FALSE,
+                                   multiple = FALSE)$res
+        if (nchar(res)==3) {
+            return(df)
+            opt <- options(show.error.messages = FALSE)
+            on.exit(options(opt))
+            stop()
+        }
+        # if nchar(res) == 2, continue
+        # scrab
+        prgbar<- txtProgressBar(min = 0, max = length(abstract_url),
+                                style = 3,initial = 0,width = 25)
+        for (i in 1:length(abstract_url)) {
+            if (i==1) df_abstract = data.frame()
+            abs_url.i=abstract_url[i]
+            if (missing(headers)) r <- GET(abs_url.i)
+            if (!missing(headers)) r <- GET(abs_url.i,add_headers(.headers = headers))
+            #check request successfully
+            if (status_code(r) != 200) {
+                return(df)
+                stop(tmcn::toUTF8('\u83B7\u53D6\u7F51\u9875\u51FA\u9519,\u8BF7\u7A0D\u540E\u518D\u5C1D\u8BD5'))
+            }
+            r_content=content(r)
+            #1. subject_abs
+            subject_abs = r_content %>%
+                sub(pattern = tmcn::toUTF8(".*\u5B66\u79D1\u5206\u7C7B</th><td colspan"),replacement = '') %>%
+                sub(pattern = tmcn::toUTF8('<th>\u9879\u76EE\u8D1F\u8D23\u4EBA.*'),replacement = "") %>%
+                sub(pattern = '.*">',replacement = "") %>%
+                sub(pattern = '</td>.*',replacement = "")%>%
+                gsub(pattern = "\u00A0",replacement = " ")%>%
+                gsub(pattern = " ",replacement = "")
+            #2. time_limit
+            time_limit = r_content %>%
+                sub(pattern = tmcn::toUTF8('.*\u7814\u7A76\u671F\u9650</th><td'),replacement = '') %>%
+                sub(pattern = tmcn::toUTF8('<th>\u4E2D\u6587\u4E3B\u9898\u8BCD.*'),replacement = "") %>%
+                sub(pattern = '.*">',replacement = "") %>%
+                sub(pattern = '</td>.*',replacement = "")%>%
+                gsub(pattern = "<br[ /]{,2}>",replacement = "") %>%
+                gsub(pattern = " ",replacement = "")
+            #3. key_word_cn
+            key_word_cn = r_content %>%
+                sub(pattern = tmcn::toUTF8('.*<th>\u4E2D\u6587\u4E3B\u9898\u8BCD'),replacement = '') %>%
+                sub(pattern = tmcn::toUTF8('<th>\u82F1\u6587\u4E3B\u9898\u8BCD.*') ,replacement = "") %>%
+                sub(pattern = '.*">',replacement = "") %>%
+                sub(pattern = '</td>.*',replacement = "")
+            #4. key_word_english
+            key_word_english = r_content %>%
+                sub(pattern = tmcn::toUTF8('.*<th>\u82F1\u6587\u4E3B\u9898\u8BCD') ,replacement = "") %>%
+                sub(pattern = '">',replacement = "erplacereplace") %>%
+                sub(pattern = '.*erplacereplace',replacement = "") %>%
+                sub(pattern = '</td>.*',replacement = "")
+            #5. abs_cn
+            abs_cn = r_content %>%
+                sub(pattern = tmcn::toUTF8('.*<th>\u4E2D\u6587\u6458\u8981</th>'),replacement = '') %>%
+                sub(pattern = '<td>',replacement = "erplacereplace") %>%
+                sub(pattern = '.*erplacereplace',replacement = "") %>%
+                sub(pattern = '</td>.*',replacement = "")
+            #6. abs_english
+            abs_english = r_content %>%
+                sub(pattern = tmcn::toUTF8('.*<th>\u82F1\u6587\u6458\u8981</th>') ,replacement = '') %>%
+                sub(pattern = '<td>',replacement = "erplacereplace") %>%
+                sub(pattern = '.*erplacereplace',replacement = "") %>%
+                sub(pattern = '</td>.*',replacement = "")
+            df_abstract.i=data.frame(subject_abs,time_limit,
+                                     key_word_cn,key_word_english,
+                                     abs_cn,abs_english)
+            df_abstract=rbind(df_abstract,df_abstract.i)
+            if (i == length(abstract_url)){
+                #rename
+                colnames(df_abstract)=c(tmcn::toUTF8('\u5B66\u79D1\u5206\u7C7B_\u6765\u81EA\u6458\u8981'),
+                                        tmcn::toUTF8('\u7814\u7A76\u671F\u9650'),
+                                        tmcn::toUTF8('\u4E2D\u6587\u4E3B\u9898\u8BCD'),
+                                        tmcn::toUTF8('\u82F1\u6587\u4E3B\u9898\u8BCD'),
+                                        tmcn::toUTF8('\u4E2D\u6587\u6458\u8981'),
+                                        tmcn::toUTF8('\u82F1\u6587\u6458\u8981')
+                                        )
+            }
+            #generate char
+            setTxtProgressBar(pb = prgbar, value = i)
+            if (all((length(abstract_url)>2),
+                    (i != length(abstract_url))))
+                Sys.sleep(time_consume)
+    }
+    close(prgbar)
+    df = cbind(df,df_abstract)
     return(df)
+    }
 }
