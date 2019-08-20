@@ -56,7 +56,7 @@ nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundS
     time_message=paste0(tmcn::toUTF8('\u5927\u7EA6\u9700\u8981'),
                         url_length*sleep.time/60,
                         tmcn::toUTF8('\u5206\u949F'))
-    if (loops==FALSE){
+    if (loop==FALSE){
     if (url_length*sleep.time/60 <= 2){
             cat(time_message,'\n')
         }else{
