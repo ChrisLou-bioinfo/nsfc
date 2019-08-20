@@ -40,7 +40,7 @@ nsfc <- function(url,headers,subject,yearStart,yearEnd,itemCategory,fundStart,fu
     }
     #wheter to continue according to time
     url_length=length(url)
-    if (loops=FALSE){
+    if (loops==FALSE){
         if (url_length*15/60 >= 2){
             message(tmcn::toUTF8('\u5927\u7EA6\u9700\u8981'),url_length*15/60,tmcn::toUTF8('\u5206\u949F'))
             message(tmcn::toUTF8('\u8BF7\u95EE\u4F60\u8FD8\u8981\u7EE7\u7EED\u5417?'))
