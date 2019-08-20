@@ -56,9 +56,9 @@ nsfc <- function(url,headers,subject,yearStart,yearEnd,itemCategory,fundStart,fu
     }
     #sleep time
     if (url_length == 1) sleep.time = 0
-    if (url_length <= 10 & sleep.time >1) sleep.time = 15
-    if (url_length <= 20 & url_length >10) sleep.time = 30
-    if (url_length > 20) sleep.time = 60
+    if (url_length <= 10 & sleep.time >1) sleep.time = runif(1,3,6)
+    if (url_length <= 20 & url_length >10) sleep.time = runif(1,3,6)
+    if (url_length > 20) sleep.time = runif(1,3,6)
     # scrab
     prgbar<- txtProgressBar(min = 0, max = url_length,
                             style = 3,initial = 0,width = 25)
