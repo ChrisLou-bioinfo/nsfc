@@ -15,7 +15,7 @@
 #' @export
 #'
 #' @examples nsfc(yearStart=2018)
-nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundStart,fundEnd,abstract){
+nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundStart,fundEnd,abstract=FALSE,loops=FALSE){
     if (!is.logical(abstract)) stop(tmcn::toUTF8('abstract\u5E94\u8BE5\u662F\u903B\u8F91\u53D8\u91CF'))
     library(httr)
     library(rvest)
@@ -55,25 +55,27 @@ nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundS
     if (url_length >10 & url_length <= 20) sleep.time = runif(1,3,6)
     if (url_length > 20) sleep.time = runif(1,3,6)
     #wheter to continue relaying on time, if time needed is more than 2min, note
-    time_message=paste0(tmcn::toUTF8('\u5927\u7EA6\u9700\u8981'),
-                        url_length*sleep.time/60,
-                        tmcn::toUTF8('\u5206\u949F'))
-    cat(crayon::red$bgWhite(tmcn::toUTF8('\u6574\u7406\u6807\u9898')),'\n')
-    if (url_length*sleep.time/60 <= 2){
-        message(time_message,'\n')
-    }else{
-        message(time_message)
-        message(tmcn::toUTF8('\u8BF7\u95EE\u4F60\u8FD8\u8981\u7EE7\u7EED\u5417?'))
-        ask = c(tmcn::toUTF8('\u7EE7\u7EED'),tmcn::toUTF8('\u4E0D\u7EE7\u7EED'))
-        res <- svDialogs::dlg_list(choices = ask,
-                                   preselect=FALSE,
-                                   multiple = FALSE)$res
-        if (nchar(res)==3) {
-            opt <- options(show.error.messages = FALSE)
-            on.exit(options(opt))
-            stop()
+    if (loops){
+            time_message=paste0(tmcn::toUTF8('\u5927\u7EA6\u9700\u8981'),
+                                url_length*sleep.time/60,
+                                tmcn::toUTF8('\u5206\u949F'))
+            cat(crayon::red$bgWhite(tmcn::toUTF8('\u6574\u7406\u6807\u9898')),'\n')
+            if (url_length*sleep.time/60 <= 2){
+                message(time_message,'\n')
+            }else{
+                message(time_message)
+                message(tmcn::toUTF8('\u8BF7\u95EE\u4F60\u8FD8\u8981\u7EE7\u7EED\u5417?'))
+                ask = c(tmcn::toUTF8('\u7EE7\u7EED'),tmcn::toUTF8('\u4E0D\u7EE7\u7EED'))
+                res <- svDialogs::dlg_list(choices = ask,
+                                           preselect=FALSE,
+                                           multiple = FALSE)$res
+                if (nchar(res)==3) {
+                    opt <- options(show.error.messages = FALSE)
+                    on.exit(options(opt))
+                    stop()
+                }
+            }
         }
-    }
     # scrab
     prgbar<- txtProgressBar(min = 0, max = url_length,
                             style = 3,initial = 0,width = 25)
