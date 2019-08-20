@@ -51,9 +51,9 @@ nsfc <- function(url,headers,subject,search,yearStart,yearEnd,itemCategory,fundS
     url_length=length(url)
     #sleep time (seconds)
     if (url_length == 1) sleep.time = 0
-    if (url_length >1 & url_length <= 10) sleep.time = runif(1,3,6)
-    if (url_length >10 & url_length <= 20) sleep.time = runif(1,3,6)
-    if (url_length > 20) sleep.time = runif(1,3,6)
+    if (url_length >1 & url_length <= 10) sleep.time = 15
+    if (url_length >10 & url_length <= 20) sleep.time = 30
+    if (url_length > 20) sleep.time = sleep.time = 60
     #wheter to continue relaying on time, if time needed is more than 2min, note
     if (loops){
             time_message=paste0(tmcn::toUTF8('\u5927\u7EA6\u9700\u8981'),
